@@ -216,57 +216,64 @@ class GenerateTransaction:
 
                     t_end = time.time()
                     print(
-                        f"Iteration spent: {(t_end - t_begin).__trunc__()/60} minutes running.\n\n"
+                        f"This batch spent: {round((t_end - t_begin).__trunc__()/60, 2)} minutes running.\n\n"
                     )
                 except Exception as e:
                     print(f"An error occurred during the request: {e}")
                     continue
+                else:
+                    # Split dict into new columns on the final DataFrame
+                    splitted_df = (
+                        aux_df.assign(
+                            name=aux_df["response_api"].apply(lambda x: x.get("name")),
+                            full_name=aux_df["response_api"].apply(lambda x: x.get("fuller_name")),
+                            alternate_names=aux_df["response_api"].apply(
+                                lambda x: x.get("alternate_names")
+                            ),
+                            birth_date=aux_df["response_api"].apply(lambda x: x.get("birth_date")),
+                        )
+                        .drop(columns=["response_api"])
+                        .rename(columns={"author_keys": "author_key"})
+                    )
+
+                    new_authors_df = (
+                        splitted_df.map(
+                            lambda x: ", ".join(x) if isinstance(x, list) else x
+                        ).infer_objects(copy=False)  # .fillna(0)
+                        # .astype({"first_publish_year": "int64", "number_of_pages_median": "int64"})
+                    )
+
+                    # Truncate list columns by char size
+                    new_authors_df[["alternate_names"]] = new_authors_df[["alternate_names"]].map(
+                        lambda x: x[:255] if isinstance(x, str) else x
+                    )
+
+                    print(f"Final df shape: {new_authors_df.shape}")
+
+                    # Write new data into MySQL table
+                    try:
+                        print("\nStarting writing new data into MySQL table.")
+                        new_authors_df.to_sql(
+                            "author",
+                            con=self.conn,
+                            if_exists="append",
+                            index=False,
+                            method=self.insert_on_duplicate,
+                        )
+                        print("Writing done successfully.")
+                    except Exception as e:
+                        RuntimeError(f"\nError while writing data into MySQL table: {e}\n\n")
+                finally:
+                    print(f"------------   Iteration {i} finished   ------------\n\n")
+
         else:
             print("No needs to fetch data from API.")
             sys.exit()
 
         tt_end = time.time()
-        print(f"Iteration spent: {(tt_end - tt_begin).__trunc__() / 60} minutes running.\n\n")
-
-        # Split dict into new columns on the final DataFrame
-        splitted_df = (
-            aux_df.assign(
-                name=aux_df["response_api"].apply(lambda x: x.get("name")),
-                full_name=aux_df["response_api"].apply(lambda x: x.get("fuller_name")),
-                alternate_names=aux_df["response_api"].apply(lambda x: x.get("alternate_names")),
-                birth_date=aux_df["response_api"].apply(lambda x: x.get("birth_date")),
-            )
-            .drop(columns=["response_api"])
-            .rename(columns={"author_keys": "author_key"})
+        print(
+            f"Total iteration spent: {round((tt_end - tt_begin).__trunc__() / 60, 2)} minutes running.\n\n"
         )
-
-        new_authors_df = (
-            splitted_df.map(lambda x: ", ".join(x) if isinstance(x, list) else x).infer_objects(
-                copy=False
-            )  # .fillna(0)
-            # .astype({"first_publish_year": "int64", "number_of_pages_median": "int64"})
-        )
-
-        # Truncate list columns by char size
-        new_authors_df[["alternate_names"]] = new_authors_df[["alternate_names"]].map(
-            lambda x: x[:255] if isinstance(x, str) else x
-        )
-
-        print(f"Final df shape: {new_authors_df.shape}")
-
-        # Write new data into MySQL table
-        try:
-            print("\nStarting writing new data into MySQL table.")
-            new_authors_df.to_sql(
-                "author",
-                con=self.conn,
-                if_exists="append",
-                index=False,
-                method=self.insert_on_duplicate,
-            )
-            print("Writing done successfully.")
-        except Exception as e:
-            RuntimeError(f"\nError while writing data into MySQL table: {e}\n\n")
 
     def get_customers(self):
         """
