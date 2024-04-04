@@ -1,9 +1,8 @@
 from datetime import datetime
 
-from airflow.decorators import dag, task
-
-# from airflow.operators.bash import BashOperator
 from include.ingest_data import GenerateTransaction
+
+from airflow.decorators import dag, task
 
 default_args = {"owner": "Alec", "retries": 1, "retry_delay": 1}
 

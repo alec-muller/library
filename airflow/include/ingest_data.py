@@ -180,9 +180,6 @@ class GenerateTransaction:
             Number of iterations: {num_iterations}
         """)
 
-        # Creating empty auxiliary df to be populated
-        aux_df = pd.DataFrame(columns=["author_keys", "response_api"])
-
         # Set uri to get author's information from Open Library API
         uri = "https://openlibrary.org/authors"
 
@@ -191,6 +188,9 @@ class GenerateTransaction:
 
         if num_iterations > 0:
             for i in range(num_iterations):
+                # Creating empty auxiliary df to be populated
+                aux_df = pd.DataFrame(columns=["author_keys", "response_api"])
+
                 # Define start and end index for this specific iteration
                 i_start = i * 100
                 i_end = i * 100 + 99 if i < num_iterations - 1 else n_rows
@@ -285,7 +285,7 @@ class GenerateTransaction:
         fk = Faker(locale="pt_BR")
 
         # Define how many new customers to add
-        n_cust = fk.random.choice(range(1, 100))
+        n_cust = fk.random.choice(range(1, 1000))
         print(f"There are {n_cust} new customers.")
 
         # Create a list of dictionaries with customer information
@@ -343,7 +343,7 @@ class GenerateTransaction:
         n_rows_db = customers_df.shape[0]
 
         # Define how many new rentings to add
-        random_number = fk.random.choice(range(1, 100))
+        random_number = fk.random.choice(range(100, 2000))
         n_rent = min(random_number, n_rows_db)
         print(f"There are {n_rent} new rentings.")
 
