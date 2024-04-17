@@ -55,7 +55,7 @@ class GenerateTransaction:
 
         print("Initiating book loading...")
         # Retrieving book data from OpenLibrary API
-        url = "https://openlibrary.org/search.json?q=language:por&sort=random.hourly&limit=1000"
+        url = "https://openlibrary.org/search.json?q=language:por&sort=random.hourly&limit=5000"
         headers = {"Accept-Encoding": "gzip"}
 
         print("Loading data from API")
@@ -285,7 +285,7 @@ class GenerateTransaction:
         fk = Faker(locale="pt_BR")
 
         # Define how many new customers to add
-        n_cust = fk.random.choice(range(1, 1000))
+        n_cust = fk.random.choice(range(500, 3000))
         print(f"There are {n_cust} new customers.")
 
         # Create a list of dictionaries with customer information
@@ -343,7 +343,7 @@ class GenerateTransaction:
         n_rows_db = customers_df.shape[0]
 
         # Define how many new rentings to add
-        random_number = fk.random.choice(range(100, 2000))
+        random_number = fk.random.choice(range(1000, 5000))
         n_rent = min(random_number, n_rows_db)
         print(f"There are {n_rent} new rentings.")
 
